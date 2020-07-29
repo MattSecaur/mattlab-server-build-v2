@@ -13,15 +13,15 @@
   debug:
     var: hostvars[item].vm_metadata
 
-- name: Check that the {{ hostvars[item].name }}.qcow2 exists
-  stat:
-    path: "{{ hostvars[item].vm_metadata.disk.path }}/{{ hostvars[item].vm_metadata.name }}.qcow2"
-  register: underclImage_result
-
 - name: Set disk path type (Fast or Slow)
   set_fact:
     disk_path: "{{ '{{ hostvars[item].vm_metadata.disk.fast_path }}' if ( {{ disk_speed }} = Fast ) else '{{ hostvars[item].vm_metadata.disk.slow_path }}' }}"
   when: disk speed is Fast
+
+- name: Check that the {{ disk_path }}/{{ hostvars[item].vm_metadata.name }}.qcow2
+  stat:
+    path: "{{ disk_path }}/{{ hostvars[item].vm_metadata.name }}.qcow2"
+  register: underclImage_result
 
 - name: DEBUG - disk_path
   debug:
