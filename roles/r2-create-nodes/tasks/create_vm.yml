@@ -24,12 +24,12 @@
 - name: Check if disk type is Fast
   set_fact:
     disk_path: "{{ hostvars[item].vm_metadata.disk.fast_path }}"
-  when: ansible_facts['disk_speed'] == 'Fast'
+  when: disk_speed == Fast
 
 - name: Check if disk type is Slow
   set_fact:
     disk_path: "{{ hostvars[item].vm_metadata.disk.slow_path }}"
-  when: ansible_facts['disk_speed'] == 'Slow'
+  when: disk_speed == Slow
 
 - name: DEBUG - disk_path
   debug:
