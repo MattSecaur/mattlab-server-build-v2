@@ -26,9 +26,9 @@ server_sshkeys:
 ## TAMLab Network information - br0 
 ###  The br0 network ips is defined in Tower depending of physical server selected
 kvmserver:
-  - [name: lt01kvm01, hyper_ip: 192.168.0.6, fast_path: /ssd01, slow_path: /sata01]
-  - [name: lt01kvm02, hyper_ip: 192.168.0.5, fast_path: /ssd02, slow_path: /sata02]
-  - [name: lt01kvm03, hyper_ip: 192.168.0.4, fast_path: /ssd03, slow_path: /sata03]
+  - [name: lt01kvm01, hyper_ip: 192.168.0.6, ssd_path: /ssd01, sata_path: /sata01]
+  - [name: lt01kvm02, hyper_ip: 192.168.0.5, ssd_path: /ssd02, sata_path: /sata02]
+  - [name: lt01kvm03, hyper_ip: 192.168.0.4, ssd_path: /ssd03, sata_path: /sata03]
 
 #Note: server_number came from Tower
 network:
@@ -40,8 +40,6 @@ network:
   interface: br0
   nameserver1: 192.168.0.34
   hypervisor_ip: "{{ kvmserver[server_number][1]['hyper_ip'] }}"
-#  ssd_path: "{{ kvmserver[server_number][2]['fast_path'] }}"
-  sata_path: "{{ kvmserver[server_number][3]['slow_path'] }}"
 
 #Stack user/passwd
 stack_user:
@@ -66,8 +64,8 @@ vm:
     variant: rhel8.2
   disk:
 #    path: " {{ ssd_path }}"
-    fast_path: "{{ kvmserver[server_number][2]['fast_path'] }}"
-    slow_path: "{{ kvmserver[server_number][2]['slow_path'] }}"    
+    fast_path: "{{ kvmserver[server_number][2]['ssd_path'] }}"
+    slow_path: "{{ kvmserver[server_number][3]['sata_path'] }}"    
     size: " {{ disk_size }}" 
 
 ## Organization and regristration key
