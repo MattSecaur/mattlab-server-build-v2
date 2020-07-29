@@ -13,13 +13,23 @@
   debug:
     var: hostvars[item].vm_metadata
 
-- name: DEBUG - disk_path
-  debug:
-    msg: "{{ '{{ hostvars[item].vm_metadata.disk.fast_path }}' if ( '{{ disk_speed }}' == 'Fast' ) else '{{ hostvars[item].vm_metadata.disk.slow_path }}' }}"
+#- name: DEBUG - disk_path
+#  debug:
+#    msg: "{{ '{{ hostvars[item].vm_metadata.disk.fast_path }}' if ( '{{ disk_speed }}' == 'Fast' ) else '{{ hostvars[item].vm_metadata.disk.slow_path }}' }}"
 
-- name: Set disk path type (Fast or Slow)
+#- name: Set disk path type (Fast or Slow)
+#  set_fact:
+#    disk_path: "{{ '{{ hostvars[item].vm_metadata.disk.fast_path }}' if ( '{{ disk_speed }}' == 'Fast' ) else '{{ hostvars[item].vm_metadata.disk.slow_path }}' }}"
+
+- name: Check if disk type is Fast
   set_fact:
-    disk_path: "{{ '{{ hostvars[item].vm_metadata.disk.fast_path }}' if ( '{{ disk_speed }}' == 'Fast' ) else '{{ hostvars[item].vm_metadata.disk.slow_path }}' }}"
+    disk_path: "{{ hostvars[item].vm_metadata.disk.fast_path }}"
+  when: ansible_facts['disk_speed'] == 'Fast'
+
+- name: Check if disk type is Slow
+  set_fact:
+    disk_path: "{{ hostvars[item].vm_metadata.disk.slow_path }}"
+  when: ansible_facts['disk_speed'] == 'Slow'
 
 - name: DEBUG - disk_path
   debug:
