@@ -1,0 +1,18 @@
+---
+- name: Delete disk images
+  file:
+    state: absent
+    path: "{{ hostvars[item].nodehwd.disk_path }}/{{ item }}.qcow2"
+  ignore_errors: true
+
+- name: Destroy tmp files (.sh)
+  file:
+    state: absent
+    path: /tmp/{{ item }}.sh
+  ignore_errors: true
+
+- name: Destroy tmp files (.xml)
+  file:
+    state: absent
+    path: /tmp/{{ item }}.xml
+  ignore_errors: true

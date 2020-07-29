@@ -1,0 +1,24 @@
+---
+- name: Build the Dynamic Inventory
+  hosts: localhost
+  tags: 
+    - all
+    - 1-Configure_nodes
+  gather_facts: False
+  remote_user: root
+  tasks:
+    - name: Create Dynamic Inventory
+      include_role:
+        name: r0-create-dynamic-inventory
+
+- name: Create nodes (VMs)
+  hosts: hypervisor
+  tags: 
+    - all
+    - 1-Configure_nodes
+  gather_facts: true
+  tasks:
+    - name: Create node role
+      include_role:
+        name: r2-create-nodes
+

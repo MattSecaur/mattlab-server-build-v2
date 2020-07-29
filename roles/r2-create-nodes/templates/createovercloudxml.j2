@@ -1,0 +1,9 @@
+#!/bin/bash
+/usr/bin/virt-install --ram {{hostvars[item].nodehwd.mem}} --vcpus {{hostvars[item].nodehwd.cpu}} --os-variant {{hostvars[item].nodehwd.os_variant}} \
+--disk path={{hostvars[item].nodehwd.disk_path}}/{{item}}.qcow2,device=disk,bus=virtio,boot_order=2,format=qcow2 --noautoconsole \
+--vnc \
+--cpu host-passthrough,cache.mode=passthrough,cell0.memory={{ ((hostvars[item].nodehwd.mem / 2) * 1024)|int|abs }},cell0.cpus=0-{{ (hostvars[item].nodehwd.cpu / 2)|int|abs - 1 }},cell1.memory={{ ((hostvars[item].nodehwd.mem / 2) * 1024)|int|abs }},cell1.cpus={{ (hostvars[item].nodehwd.cpu / 2)|int|abs }}-{{ (hostvars[item].nodehwd.cpu - 1)|int|abs }} \
+--network network:{{ vnet_prov.name }},boot_order=1,mac={{hostvars[item].custom_mac}} \
+--network bridge=br0,model=virtio,boot_order=3  \
+--name {{item}} --dry-run --print-xml  > /tmp/{{item}}.xml; 
+virsh define --file /tmp/{{item}}.xml; 

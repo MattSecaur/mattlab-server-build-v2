@@ -1,0 +1,79 @@
+#jinja2:lstrip_blocks: True
+#cloud-config
+package_upgrade: false
+users:
+  - default
+  - name: root
+    ssh-authorized-keys:
+      {% for serverkey in server_sshkeys %}
+      - {{ serverkey.key }}
+      
+      {% endfor %}
+
+
+ssh_pwauth: yes
+
+chpasswd:
+    expire: false
+    list: |
+        root:{{ stack_user.passwd }}
+
+write_files:
+  - path: /etc/sysconfig/network-scripts/ifcfg-eth1
+    content: |
+      DEVICE=eth1
+      TYPE=Ethernet
+      BOOTPROTO=none
+      ONBOOT=yes
+      PEERDNS=yes
+      NM_CONTROLLED=no
+  - path: /etc/sysconfig/network-scripts/ifcfg-eth0
+    content: |
+      DEVICE=eth0
+      TYPE=Ethernet
+      BOOTPROTO=none
+      IPADDR={{ vm_ip }}
+      NETMASK=255.255.255.0
+      GATEWAY=192.168.0.1
+      DNS1=192.168.0.34
+      DNS2=192.168.0.44
+      ONBOOT=yes
+      PEERDNS=yes
+  - path: /etc/sysctl.conf
+    content: |
+      net.ipv4.ip_forward = 1
+  - path: /etc/resolv.conf
+    content: |
+      nameserver 192.168.0.34
+      nameserver 192.168.0.44
+
+output:
+  all: '| tee -a /var/log/cloud-init-output.log'
+
+bootcmd:
+  - ifdown eth0
+  - ifup eth0
+  - echo "{{ vm_ip }} {{ vm.hostname }} {{ vm.name }}" >> /etc/hosts
+  - [ dnf, install, -y, 'http://lt01sat01.matt.lab/pub/katello-ca-consumer-latest.noarch.rpm' ]
+                             
+rh_subscription:
+  activation-key: {{organization.activationkey}}
+  org: {{organization.id}}
+  auto-attach: True
+  enable-repo:
+    {% for reposname in vm_repos %}
+    - {{ reposname }}
+    {% endfor %}
+
+cloud_init_modules:
+  - migrator
+  - write-files
+  - bootcmd
+  - growpart
+  - resizefs
+  - set_hostname
+  - update_hostname
+  - update_etc_hosts
+  - rsyslog
+  - users-groups
+  - ssh

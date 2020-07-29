@@ -1,0 +1,38 @@
+---
+# vars file for r2-nodes-cloud-init
+# Image
+image_path: /var/lib/libvirt/images/
+#image_rhel8_guest: 'rhel-8.1-x86_64-kvm.qcow2'
+#rhel_guest_url: "http://download-node-02.eng.bos.redhat.com/brewroot/packages/rhel-guest-image/8.1/417/images/rhel-guest-image-8.1-417.x86_64.qcow2"
+image_rhel8_guest: 'rhel-8.2-x86_64-kvm.qcow2'
+rhel_guest_url: "http://download-node-02.eng.bos.redhat.com/brewroot/packages/rhel-guest-image/8.2/296/images/rhel-guest-image-8.2-296.x86_64.qcow2"
+
+
+#KVM host
+kvm_host8:
+  repositories: 
+    - rhel-8-for-x86_64-baseos-rpms
+    - rhel-8-for-x86_64-appstream-rpms
+    - rhel-8-for-x86_64-supplementary-rpms
+  packages:
+    - libvirt-client 
+    - libvirt-daemon 
+    - qemu-kvm 
+    - libvirt-daemon-driver-qemu 
+    - libvirt-daemon-kvm 
+    - virt-install 
+    - rsync
+    - libguestfs-tools
+    - ipmitool
+
+libvirt_config_lines:
+  - 'unix_sock_group = "qemu"'
+  - 'unix_sock_ro_perms = "0750"'
+  - 'unix_sock_rw_perms = "0770"'
+  - 'unix_sock_admin_perms = "0700"'
+  - 'unix_sock_dir = "/var/run/libvirt"'
+
+vm_repos:
+  - rhel-8-for-x86_64-baseos-rpms
+  - rhel-8-for-x86_64-appstream-rpms
+  

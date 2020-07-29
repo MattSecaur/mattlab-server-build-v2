@@ -1,0 +1,10 @@
+---
+# vars file for r0-virt-network
+
+## Refer to the cloud.yml config file for the details ###
+
+## ctlplan virtual network
+virt_ctrlplane: 
+  name: "{{ vnet_prov.name }}"
+  ip_addr: "{{ vnet_prov.ip_addr }}"
+  netmask: "{{ vnet_prov.netmask }}"

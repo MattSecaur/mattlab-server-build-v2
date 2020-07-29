@@ -1,0 +1,6 @@
+<network>
+<name>{{ virt_ctrlplane.name }}</name>
+  <forward mode="nat"/>
+  <bridge name="virbr1" zone="public" stp="on" delay="0"/>
+  <ip address="{{ virt_ctrlplane.ip_addr }}" netmask="{{ virt_ctrlplane.netmask }}"/>
+</network>

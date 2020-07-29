@@ -1,0 +1,23 @@
+[hypervisor]
+10.74.169.121
+
+[undercloud]
+osp16-undercloud  ansible_host=10.74.169.122
+
+
+[control]
+osp16-control1  
+osp16-control2  
+osp16-control3  
+
+[compute]
+osp16-compute1  
+osp16-compute2  
+osp16-compute3
+
+[baremetal]
+osp16-baremetal
+
+[overcloud:children]
+control
+compute

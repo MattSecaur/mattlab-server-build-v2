@@ -1,0 +1,126 @@
+---
+- name: build the dynamic inventory
+  hosts: localhost
+  tags: 
+    - iwantodeleteeverything
+  gather_facts: False
+  remote_user: root
+  tasks:
+    - name: Create Dynamic Inventory
+      include_role:
+        name: r0-create-dynamic-inventory
+
+- hosts: minion
+  tags: 
+    - iwantodeleteeverything
+  gather_facts: False
+  tasks:
+    - name: Valid if host is up
+      wait_for_connection:
+        timeout: 10
+      register: connection_res
+      ignore_errors: true
+
+    - name: Unregister the undercloud from the rhsm
+      redhat_subscription:
+        state: absent
+      when: connection_res is success
+      ignore_errors: true
+
+- hosts: undercloud
+  tags: 
+    - iwantodeleteeverything
+  gather_facts: False
+  tasks:
+    - name: Valid if host is up
+      wait_for_connection:
+        timeout: 10
+      register: connection_res
+      ignore_errors: true
+
+    - name: Unregister the undercloud from the rhsm
+      redhat_subscription:
+        state: absent
+      when: connection_res is success
+      ignore_errors: true
+
+- hosts: hypervisor
+  tags: 
+    - iwantodeleteeverything
+  gather_facts: False
+  tasks:
+  # Destroy Overcloud vm
+    - name: destroy all the overcloud OSP vm
+      virt:
+        name: "{{ item }}"
+        command: destroy  
+      with_items: "{{ groups['overcloud'] }}"
+      ignore_errors: true
+    - name: undefine all the overcloud OSP vm
+      virt:
+        name: "{{ item }}"
+        command: undefine  
+      with_items: "{{ groups['overcloud'] }}"
+      ignore_errors: true
+    # Destroy Undercloud vm
+    - name: destroy the undercloud
+      virt:
+        name: "{{ item }}"
+        command: destroy
+      with_items: "{{ groups['underclouds'] }}"
+      ignore_errors: true  
+    - name: undefine the undercloud
+      virt:
+        name: "{{ item }}"
+        command: undefine
+      with_items: "{{ groups['underclouds'] }}"
+      ignore_errors: true  
+    # Delete undercloud disks
+    - name: Delete undercloud disks
+      file:
+        state: absent
+        path: "{{ hostvars[item].vm_metadata.disk.path}}/{{ hostvars[item].vm_metadata.name }}.qcow2"
+      ignore_errors: true  
+      with_items: "{{ groups['underclouds'] }}"
+
+    # Delete undercloud cloud init
+    - name: Delete cloud-init iso file
+      file:
+        state: absent
+        path: "{{ hostvars[item].vm_metadata.disk.path }}/{{ hostvars[item].vm_metadata.name }}.iso"
+      with_items: "{{ groups['underclouds'] }}"
+      ignore_errors: true  
+    - name: Delete tmp user-data file
+      file:
+        state: absent
+        path: "/tmp/user-data-{{ hostvars[item].vm_metadata.name }}"
+      with_items: "{{ groups['underclouds'] }}"
+      ignore_errors: true  
+    - name: Delete tmp meta-data file
+      file:
+        state: absent
+        path: "/tmp/meta-data-{{ hostvars[item].vm_metadata.name }}"
+      with_items: "{{ groups['underclouds'] }}"
+      ignore_errors: true
+    # Delete Overcloud VMs disks    
+    - name: Delete overcloud VMs volumes 
+      include: delete_overcloudVMs.yml
+      with_items: "{{ groups['overcloud'] }}"
+    # Delete vbmc
+    - name: destroy all the overcloud OSP vm
+      shell: vbmc delete {{ item }}  
+      with_items: "{{ groups['overcloud'] }}"
+      ignore_errors: true
+    # Stop network
+    - name: Stop {{ vnet_prov.name }} network
+      virt_net:
+        command: destroy
+        name: "{{ vnet_prov.name }}"
+      ignore_errors: true
+    # Undefine a network
+    - name: Destroy {{ vnet_prov.name }} network
+      virt_net:
+        command: undefine
+        name: "{{ vnet_prov.name }}"
+      ignore_errors: true
+      

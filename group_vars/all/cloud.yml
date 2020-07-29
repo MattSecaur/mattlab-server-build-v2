@@ -1,0 +1,77 @@
+---
+## Control plane virtual network - gateway
+vnet_ip_list: ["192","168","10","1"]
+vnet_prov: 
+  name: ospcntrlplane
+  ip_addr: "{{ vnet_ip_list | join('.') }}"
+  ip_2digit: "{{ vnet_ip_list[0] }}.{{ vnet_ip_list[1] }}"
+  ip_3digit: "{{ vnet_ip_list[0] }}.{{ vnet_ip_list[1] }}.{{ vnet_ip_list[2] }}"
+  network: "{{ vnet_ip_list[0] }}.{{ vnet_ip_list[1] }}.{{ vnet_ip_list[2] }}.0"
+  netmask: 255.255.255.0
+  prefix: 24
+
+## ssh keys of servers that wants/needs to access nodes passwordless
+server_sshkeys:
+  - name: laptopkey 
+    key: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCx7fsZYBT9ZRFmDKga3t1vAommTXjLLmcv+1IgBJ8hMTAAPk216/z/LXvXzB7Qou5HtZLU+KBRSusrg35KxO8/pE2jqGrmLh58MOgKWGDz/Iogybd10KoKjTma4pwTDEn9p255bHoymfKb+NxsQIVgH9F/joEx6Oj1mH4EF45zoJ+CpU0VipW3lWTBNppiFPe74IC/Zpfxlq5ATBrlXi3tXzsd4yGObThVcSZ1bKFID2MLdcq6mKpHEr1ceqOsZY6TEd69UlH9uTbYf1nYdXpi1SpI0uM7sQqzdyEMpKadcOOkZ8sZ/q05fIt9KbC28172y36/Ol4ItmA5fwx68uKX
+  - name: hostrootkey
+    key: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDsvOG93qj70Cxn5KsCGdGd+HYxlVsZpKv2zftsQtazfan0Hc11VNVVK5XejieGD5TWpvUYtSRFtuBYB/CxEasHwLZubLtX7kiFN90vdSEu+xorItIMjxrEzfl+WdNmb6FTd3MKpYC7x84DouWdM+DcSFlrKpxOGUoLq3ZymTtMG3hLw6X9hoDHba002B2pT+fL7O7N2e8HJOdljQyTgyh+rnao7GCQwJ4/Qkk5mqIeqLPDO/kV+Iy9vPI33OMPZIVcaxgGfRMBbtwcjrtUKBTgP8BhQKcSzUCqf5eOf9eTpni0CJKHetWoSCkJHNs4cSxdzMtGRUodgGKS8Ya1H9DT
+  - name: tower
+    key: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCsFgFmBqKS4i09Ux5wW+X/e/V2U+b1ebqblY42bz2zhMSNIy2C1Jw9RCtNd+2oz4wjRanvl4lMQ5T9ztgQUw5lUH9vIF+14GjVTB+NYCsPZ88bKhAIp6s/Pzxs7ZqBk75Xim7End3qNvxSCnvwAaCMpEfTDTsQtbYShhHsyn3Pgm+oK5AQqgZPmxx8TcdQf8WMIcyyS59LQHWQ7j3E7FbsetzibfqCBaVoLehWJKtfytPr1VvFKha2MuWl0hOLIniaITz939CDC1AJ0ydP01nkH91/Nw3UVHQE9vn7R4ynzjHKHNS8WbFdqq7lCd/a8fU0ArCaG1ICXFvsL1NatzZ3
+  - name: dell-10 root key
+    key: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDATYpATNlhg1mIpoSE44wPjQKg52QKFv3gPjdmK6FzfGivqI67TwAti91IM0dMKMl5NlPPdJMPPb0RSFdHdiGDyC/bvpyzDprNUtyHFmb3MOKhJAOb40HDsbHqdoWr+XfyKtQYjQ71sW8Oj2G386Ha4502X29Hp2e2uwx+UUh6UiNJo3rjAyVfXY+7LtC77Awuyz/VXaFznEdZjArLYhhWgwJZQVsLXwDc0nuif3dHHfQAsUiBQQF4JQRXY3eoTRNxM+CDG8ZeCS1Oo/i/F97OOSYIPkX4b4b74s+UI0lyaDMjZOkmpEFmiWXR8HKZSyNN7/AsPZj0Hbg1GPHKFTYB
+
+
+
+## TAMLab Network information - br0 
+###  The br0 network ips is defined in Tower depending of physical server selected
+kvmserver:
+  - [name: lt01kvm01, hyper_ip: 192.168.0.6, fast_path: /ssd01, slow_path: /sata01]
+  - [name: lt01kvm02, hyper_ip: 192.168.0.5, fast_path: /ssd02, slow_path: /sata02]
+  - [name: lt01kvm03, hyper_ip: 192.168.0.4, fast_path: /ssd03, slow_path: /sata03]
+
+#Note: server_number came from Tower
+network:
+  netmask: 255.255.255.0
+  gtw: 192.168.0.1
+  network_interface: br0
+  prefix: 24
+  net: 192.168.0.0
+  interface: br0
+  nameserver1: 192.168.0.34
+  hypervisor_ip: "{{ kvmserver[server_number][1]['hyper_ip'] }}"
+#  ssd_path: "{{ kvmserver[server_number][2]['fast_path'] }}"
+  sata_path: "{{ kvmserver[server_number][3]['slow_path'] }}"
+
+#Stack user/passwd
+stack_user:
+  name: stack
+  passwd: redhat
+
+#Root passwd for overcloud nodes (used by firstboot.yaml)
+root_user:
+  passwd: redhat
+
+vm:
+  name: "{{ vm_name }}"
+  hostname: "{{ vm_name }}.matt.lab"
+  domain: matt.lab
+  passwd: redhat
+  cpu: "{{ num_cpu }}"
+  mem: " {{ num_mem }}"
+  virt_type: kvm
+  virt_hypervisor: hvm
+  os:
+    type: linux
+    variant: rhel8.2
+  disk:
+#    path: " {{ ssd_path }}"
+    path: "{{ kvmserver[server_number][2]['fast_path'] }}"
+    size: " {{ disk_size }}" 
+
+## Organization and regristration key
+organization:
+  id: MattLab
+  activationkey: rhel8-key
+#  id: 1979710
+#  activationkey: tamlabosp1key

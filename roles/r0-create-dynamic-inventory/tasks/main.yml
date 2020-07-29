@@ -1,0 +1,24 @@
+---
+# tasks file for r1-create-dynamic-inventory
+## Configure a custom inventory based on the pnq dell servers 
+## selected in Tower
+
+## Hypervisor - Dell server - Inventory
+- name: add the hypervisor host and the server group
+  add_host:
+    name: hypervisor
+    ansible_host: "{{ network.hypervisor_ip }}"
+    groups: kvmserver
+
+## vm inventory
+- name: Add undercloud hostname and IP
+  add_host:
+    name: "{{ vm_name }}"
+    ansible_host: "{{ vm_ip }}"
+    vm_metadata: "{{ vm }}"
+    groups: vm
+
+
+- name: DEBUG all groups
+  debug:
+    var: groups

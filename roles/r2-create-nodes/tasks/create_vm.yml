@@ -1,0 +1,66 @@
+###### hostvars[item] ########
+#  Resize the hostvars[item] image
+# 
+- name: DEBUG - item VALUE
+  debug:
+    msg: "ITEM = {{ item }}"
+
+- name: DEBUG - undercloud, hostvars[item]
+  debug:
+    var: hostvars[item]
+
+- name: DEBUG - undercloud, hostvars[item] METADATA
+  debug:
+    var: hostvars[item].vm_metadata
+
+- name: Check that the {{ hostvars[item].name }}.qcow2 exists
+  stat:
+    path: "{{ hostvars[item].vm_metadata.disk.path }}/{{ hostvars[item].vm_metadata.name }}.qcow2"
+  register: underclImage_result
+
+- name: Resize hostvars[item] image (create target image)
+  command: >
+    qemu-img create -f qcow2 -o preallocation=off {{ hostvars[item].vm_metadata.disk.path}}/{{ hostvars[item].vm_metadata.name }}.qcow2 
+    '{{ hostvars[item].vm_metadata.disk.size }}G'
+  when: not underclImage_result.stat.exists
+
+- name: Resize hostvars[item] image (call virt-resize)
+  command: virt-resize --expand /dev/sda3 {{ image_path }}{{ image_rhel8_guest }} {{ hostvars[item].vm_metadata.disk.path }}/{{ hostvars[item].vm_metadata.name }}.qcow2
+  when: not underclImage_result.stat.exists
+
+########################################
+#   Create the hostvars[item] cloud-init iso file
+#
+- block:
+  - name: create undercloud /tmp/{{ item }}
+    file:
+      path: /tmp/{{ item }}
+      state: directory
+      mode: '0755'  
+  - name: Copy the {{ hostvars[item].vm_metadata.name }} cloud-init user data
+    template:
+      src: cloudinit_userdata_undercloud.yml.j2
+      dest: /tmp/{{ item }}/user-data
+  - name: Copy the {{ hostvars[item].vm_metadata.name }} cloud-init meta data
+    template:
+      src: cloudinit_meta-data_undercloud.yml.j2
+      dest: /tmp/{{ item }}/meta-data
+  - name: Create the cloud-init iso file in {{ hostvars[item].vm_metadata.disk.path }} folder
+    shell: genisoimage -output {{ hostvars[item].vm_metadata.disk.path }}/{{ hostvars[item].vm_metadata.name }}.iso -volid cidata -joliet -rock /tmp/{{ item }}/user-data /tmp/{{ item }}/meta-data
+  when: hostvars[item].vm_metadata.name not in virt_vms.list_vms
+
+#########################################################################
+#
+#  Creating the hostvars[item] VM
+#  Deploy hostvars[item] VM
+- name: Deploy {{ hostvars[item].vm_metadata.name }} VM
+  command: >
+    /usr/bin/virt-install --ram {{ hostvars[item].vm_metadata.mem }} --vcpus {{ hostvars[item].vm_metadata.cpu }} 
+    --os-variant {{ hostvars[item].vm_metadata.os.variant }} 
+    --disk path={{ hostvars[item].vm_metadata.disk.path }}/{{ hostvars[item].vm_metadata.name }}.qcow2,device=disk,bus=virtio,format=qcow2 
+    --disk path={{ hostvars[item].vm_metadata.disk.path }}/{{ hostvars[item].vm_metadata.name }}.iso,device=cdrom 
+    --import --noautoconsole --vnc --hvm 
+    --network bridge=br0,model=virtio 
+    --network bridge=br1,model=virtio
+    --name {{ hostvars[item].vm_metadata.name }}
+  when: hostvars[item].vm_metadata.name not in virt_vms.list_vms
