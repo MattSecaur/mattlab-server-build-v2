@@ -15,7 +15,7 @@
 
 - name: DEBUG - disk_path
   debug:
-    msg: "disk_speed = {{ disk_speed }} and fast_path = {{ hostvars[item].vm_metadata.disk.fast_path }} and slow_path = {{ hostvars[item].vm_metadata.disk.slow_path }}"
+    msg: "{{ '{{ hostvars[item].vm_metadata.disk.fast_path }}' if ( '{{ disk_speed }}' == 'Fast' ) else '{{ hostvars[item].vm_metadata.disk.slow_path }}' }}"
 
 - name: Set disk path type (Fast or Slow)
   set_fact:
