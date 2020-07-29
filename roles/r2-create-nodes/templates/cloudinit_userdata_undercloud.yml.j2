@@ -16,7 +16,7 @@ ssh_pwauth: yes
 chpasswd:
     expire: false
     list: |
-        root:{{ stack_user.passwd }}
+        root:{{ root_user.passwd }}
 
 write_files:
   - path: /etc/sysconfig/network-scripts/ifcfg-eth1

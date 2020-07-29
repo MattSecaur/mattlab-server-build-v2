@@ -28,52 +28,13 @@
   virt: command=list_vms
   register: virt_vms
 
-# Create and configure stack user with ssh-key to be able to control VM power management
-- name: Create stack user on the host and the ssh key
-  user:
-    name: "{{ stack_user.name }}"
-    password: "{{ stack_user.passwd | password_hash('sha512') }}"
-    generate_ssh_key: yes
-    ssh_key_bits: 2048
-    ssh_key_file: .ssh/id_rsa
-    groups: libvirt
-    state: present
-  register: stackuser_res
-  ## Collect the ssh keys information
-- name: Fetch the stack private key
-  fetch:
-    src: /home/stack/.ssh/id_rsa
-    dest: /tmp/stack_privkey/
-    flat: yes
-
-- name: Register the stack private key
-  command: cat /home/stack/.ssh/id_rsa
-  register: sshprivkey_reg
-
-- name: Register the stack public key
-  slurp:
-    src: /home/stack/.ssh/id_rsa.pub
-  register: slurp_pubkey
-
-  ## Set fact hypervisor stack host priv key
-- name: Create facts with hypervisor private and public key
-  set_fact:
-    stack_priv_key: "{{ sshprivkey_reg.stdout|to_json }}"
-    stack_pub_key: "{{ slurp_pubkey['content'] | b64decode }}"
-
-- name: Set up stack authorized keys
-  authorized_key:
-    user: stack
-    state: present
-    key: "{{ slurp_pubkey['content'] | b64decode }}"
-
-  ## Add the libvirt access for the group libvirtd
-- name: Add libvirt access for the group libvirtd
-  lineinfile:
-    path: /etc/libvirt/libvirt.conf
-    line: "{{ item }}"
-    state: present
-  with_items: "{{ libvirt_config_lines }}"
+## Add the libvirt access for the group libvirtd
+#- name: Add libvirt access for the group libvirtd
+#  lineinfile:
+#    path: /etc/libvirt/libvirt.conf
+#    line: "{{ item }}"
+#    state: present
+#  with_items: "{{ libvirt_config_lines }}"
 
 
 ######################################
@@ -82,7 +43,7 @@
 #  - Undercloud
 #  - minion
 #
-- name: Create underclouds 
+- name: Create VM 
   include: create_vm.yml
   with_items: "{{ vm_name }}"
   when: (item not in virt_vms.list_vms)

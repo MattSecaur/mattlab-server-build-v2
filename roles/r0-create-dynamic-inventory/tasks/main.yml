@@ -11,7 +11,7 @@
     groups: kvmserver
 
 ## vm inventory
-- name: Add undercloud hostname and IP
+- name: Add VM hostname and IP
   add_host:
     name: "{{ vm_name }}"
     ansible_host: "{{ vm_ip }}"
