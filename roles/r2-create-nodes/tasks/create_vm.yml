@@ -16,16 +16,15 @@
 - name: Set disk path type (Fast or Slow)
   set_fact:
     disk_path: "{{ '{{ hostvars[item].vm_metadata.disk.fast_path }}' if ( {{ disk_speed }} = Fast ) else '{{ hostvars[item].vm_metadata.disk.slow_path }}' }}"
-  when: disk speed is Fast
+
+- name: DEBUG - disk_path
+  debug:
+    msg: "disk_path = {{ disk_path }}"
 
 - name: Check that the {{ disk_path }}/{{ hostvars[item].vm_metadata.name }}.qcow2
   stat:
     path: "{{ disk_path }}/{{ hostvars[item].vm_metadata.name }}.qcow2"
   register: underclImage_result
-
-- name: DEBUG - disk_path
-  debug:
-    msg: "disk_path = {{ disk_path }}"
 
 - name: Resize hostvars[item] image (create target image)
   command: >
