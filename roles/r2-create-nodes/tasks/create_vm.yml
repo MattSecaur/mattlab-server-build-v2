@@ -18,14 +18,23 @@
     path: "{{ hostvars[item].vm_metadata.disk.path }}/{{ hostvars[item].vm_metadata.name }}.qcow2"
   register: underclImage_result
 
+- name: Set disk path type (Fast or Slow)
+  set_fact:
+    disk_path: "{{ '{{ hostvars[item].vm_metadata.disk.fast_path }}' if ( {{ disk_speed }} = Fast ) else '{{ hostvars[item].vm_metadata.disk.slow_path }}' }}"
+  when: disk speed is Fast
+
+- name: DEBUG - disk_path
+  debug:
+    msg: "disk_path = {{ disk_path }}"
+
 - name: Resize hostvars[item] image (create target image)
   command: >
-    qemu-img create -f qcow2 -o preallocation=off {{ hostvars[item].vm_metadata.disk.path}}/{{ hostvars[item].vm_metadata.name }}.qcow2 
+    qemu-img create -f qcow2 -o preallocation=off {{ disk_path }}/{{ hostvars[item].vm_metadata.name }}.qcow2 
     '{{ hostvars[item].vm_metadata.disk.size }}G'
   when: not underclImage_result.stat.exists
 
 - name: Resize hostvars[item] image (call virt-resize)
-  command: virt-resize --expand /dev/sda3 {{ image_path }}{{ image_rhel8_guest }} {{ hostvars[item].vm_metadata.disk.path }}/{{ hostvars[item].vm_metadata.name }}.qcow2
+  command: virt-resize --expand /dev/sda3 {{ image_path }}{{ image_rhel8_guest }} {{ disk_path }}/{{ hostvars[item].vm_metadata.name }}.qcow2
   when: not underclImage_result.stat.exists
 
 ########################################
@@ -45,8 +54,8 @@
     template:
       src: cloudinit_meta-data_undercloud.yml.j2
       dest: /tmp/{{ item }}/meta-data
-  - name: Create the cloud-init iso file in {{ hostvars[item].vm_metadata.disk.path }} folder
-    shell: genisoimage -output {{ hostvars[item].vm_metadata.disk.path }}/{{ hostvars[item].vm_metadata.name }}.iso -volid cidata -joliet -rock /tmp/{{ item }}/user-data /tmp/{{ item }}/meta-data
+  - name: Create the cloud-init iso file in {{ disk_path }} folder
+    shell: genisoimage -output {{ disk_path }}/{{ hostvars[item].vm_metadata.name }}.iso -volid cidata -joliet -rock /tmp/{{ item }}/user-data /tmp/{{ item }}/meta-data
   when: hostvars[item].vm_metadata.name not in virt_vms.list_vms
 
 #########################################################################
@@ -57,8 +66,8 @@
   command: >
     /usr/bin/virt-install --ram {{ hostvars[item].vm_metadata.mem }} --vcpus {{ hostvars[item].vm_metadata.cpu }} 
     --os-variant {{ hostvars[item].vm_metadata.os.variant }} 
-    --disk path={{ hostvars[item].vm_metadata.disk.path }}/{{ hostvars[item].vm_metadata.name }}.qcow2,device=disk,bus=virtio,format=qcow2 
-    --disk path={{ hostvars[item].vm_metadata.disk.path }}/{{ hostvars[item].vm_metadata.name }}.iso,device=cdrom 
+    --disk path={{ disk_path }}/{{ hostvars[item].vm_metadata.name }}.qcow2,device=disk,bus=virtio,format=qcow2 
+    --disk path={{ disk_path }}/{{ hostvars[item].vm_metadata.name }}.iso,device=cdrom 
     --import --noautoconsole --vnc --hvm 
     --network bridge=br0,model=virtio 
     --network bridge=br1,model=virtio

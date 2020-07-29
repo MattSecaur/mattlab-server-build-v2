@@ -66,7 +66,8 @@ vm:
     variant: rhel8.2
   disk:
 #    path: " {{ ssd_path }}"
-    path: "{{ kvmserver[server_number][2]['fast_path'] }}"
+    fast_path: "{{ kvmserver[server_number][2]['fast_path'] }}"
+    slow_path: "{{ kvmserver[server_number][2]['slow_path'] }}"    
     size: " {{ disk_size }}" 
 
 ## Organization and regristration key
